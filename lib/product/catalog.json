@@ -1,0 +1,90 @@
+[
+  {
+    "alt": "A carved orange pumpkin resting on a grey blanket",
+    "category": "Pumpkins",
+    "description": "Give your Halloween display a familiar grin. Set this jack-o-lantern beside the door or make it the centre of your autumn table.",
+    "handle": "midnight-jack-o-lantern",
+    "image": "/images/midnight-jack-o-lantern.avif",
+    "price": 1499,
+    "title": "Midnight Jack-o-Lantern",
+    "height": 1199,
+    "width": 900
+  },
+  {
+    "alt": "Glowing jack-o-lantern string lights",
+    "category": "Lights & Lanterns",
+    "description": "A row of little pumpkin faces for Halloween nights. Drape them along a shelf or frame your party table with a warm orange glow.",
+    "handle": "pumpkin-party-string-lights",
+    "image": "/images/pumpkin-party-string-lights.avif",
+    "price": 899,
+    "title": "Pumpkin Party String Lights",
+    "height": 598,
+    "width": 900
+  },
+  {
+    "alt": "Two skeleton decorations beside a house",
+    "category": "Porch Decor",
+    "description": "Give trick-or-treaters a bony welcome. This skeleton duo makes a playful focal point for your Halloween porch display.",
+    "handle": "porch-skeleton-duo",
+    "image": "/images/porch-skeleton-duo.avif",
+    "price": 3499,
+    "title": "Porch Skeleton Duo",
+    "height": 600,
+    "width": 900
+  },
+  {
+    "alt": "Three decorated pumpkins arranged with Halloween decorations",
+    "category": "Pumpkins",
+    "description": "Three grinning pumpkins, one easy Halloween display. Arrange them together by the door or spread a little autumn around the house.",
+    "handle": "harvest-pumpkin-trio",
+    "image": "/images/harvest-pumpkin-trio.avif",
+    "price": 1999,
+    "title": "Harvest Pumpkin Trio",
+    "height": 913,
+    "width": 900
+  },
+  {
+    "alt": "A house porch decorated with pumpkins and Halloween lights",
+    "category": "Porch Decor",
+    "description": "Turn the front door into the start of the party. Build a Halloween welcome with pumpkins and a warm glow inspired by a classic haunted porch.",
+    "handle": "haunted-house-porch-kit",
+    "image": "/images/haunted-house-porch-kit.avif",
+    "price": 4999,
+    "title": "Haunted House Porch Kit",
+    "height": 600,
+    "width": 900
+  },
+  {
+    "alt": "A glowing carved jack-o-lantern at night",
+    "category": "Lights & Lanterns",
+    "description": "A small Halloween grin for cosy evenings. Give a shelf, side table, or entryway its own pool of pumpkin light.",
+    "handle": "little-lantern-pumpkin",
+    "image": "/images/little-lantern-pumpkin.avif",
+    "price": 999,
+    "title": "Little Lantern Pumpkin",
+    "height": 600,
+    "width": 900
+  },
+  {
+    "alt": "A Halloween porch with pumpkins and ghost decorations",
+    "category": "Porch Decor",
+    "description": "Make room for the Boo Crew. Bring pumpkins and ghostly company to your entryway for a friendly Halloween welcome.",
+    "handle": "boo-crew-porch-decorations",
+    "image": "/images/boo-crew-porch-decorations.avif",
+    "price": 2999,
+    "title": "Boo Crew Porch Decorations",
+    "height": 1350,
+    "width": 900
+  },
+  {
+    "alt": "A table arranged with Halloween decorations",
+    "category": "Table Decor",
+    "description": "Set the scene for an October gathering. Create a Halloween centrepiece with an autumn arrangement made for the party table.",
+    "handle": "autumn-table-decor-set",
+    "image": "/images/autumn-table-decor-set.avif",
+    "price": 2499,
+    "title": "Autumn Table Decor Set",
+    "height": 1125,
+    "width": 900
+  }
+]

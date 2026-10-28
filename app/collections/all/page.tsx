@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
 
-import { CollectionResults } from "@/components/collections/browse";
-import {
-  CollectionBrowseBoundary,
-  SearchParamsProbe,
-} from "@/components/collections/collection-page";
-import { getAllProductsMetadata, getAllProductsResults } from "@/lib/collections/server";
+import { CollectionBrowseBoundary } from "@/components/collections/collection-page";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return getAllProductsMetadata();
-}
+import { DemoCollectionResults } from "../../../components/browse";
 
-export default function AllProductsPage({ searchParams }: PageProps<"/collections/all">) {
+export const metadata: Metadata = { title: "Products" };
+
+export default function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   return (
     <CollectionBrowseBoundary>
-      <CollectionResults results={getAllProductsResults()} />
-      <SearchParamsProbe searchParams={searchParams} />
+      <DemoCollectionResults searchParams={searchParams} />
     </CollectionBrowseBoundary>
   );
 }

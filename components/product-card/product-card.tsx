@@ -1,5 +1,6 @@
+import type { ReactNode } from "react";
+
 import { Link } from "@/components/ui/link";
-import { buildProductUrl } from "@/lib/product";
 import type { ProductCard as ProductCardType } from "@/lib/product/types";
 
 import {
@@ -11,17 +12,16 @@ import {
   ProductCardSkeleton,
   ProductCardTitle,
 } from "./components";
-import { QuickShop } from "./quick-shop";
 
 export interface ProductCardProps {
   loading?: "eager" | "lazy";
   outOfStockText?: string;
   product: ProductCardType;
-  quickShopText?: string;
+  quickShop?: ReactNode;
 }
 
-export function ProductCard({ loading, outOfStockText, product, quickShopText }: ProductCardProps) {
-  const href = buildProductUrl(product.handle, product.defaultVariantSelectedOptions ?? []);
+export function ProductCard({ loading, outOfStockText, product, quickShop }: ProductCardProps) {
+  const href = `/products/${product.handle}`;
   // The link is stretched rather than wrapping the card so Quick Shop isn't a button inside an anchor.
   return (
     <ProductCardRoot>
@@ -35,15 +35,7 @@ export function ProductCard({ loading, outOfStockText, product, quickShopText }:
           outOfStockText={outOfStockText}
           width={product.featuredImage?.width}
         >
-          {quickShopText && product.availableForSale && !product.isGiftCard ? (
-            <QuickShop
-              handle={product.handle}
-              href={href}
-              image={product.featuredImage?.url ?? null}
-              label={quickShopText}
-              title={product.title}
-            />
-          ) : null}
+          {quickShop}
         </ProductCardImage>
         <ProductCardContent>
           <ProductCardTitle>

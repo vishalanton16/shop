@@ -1,209 +1,71 @@
-import type { Metadata } from "next";
-import { cacheLife, cacheTag } from "next/cache";
+import { resolveBrowseParams } from "@/lib/collections";
+import type { BrowseResults } from "@/lib/collections/types";
+import type { Facets } from "@/lib/filters/types";
 
-import { describeCollection, PRODUCTS_PER_PAGE, resolveBrowseParams } from "@/lib/collections";
-import type {
-  BrowseResults,
-  BrowseState,
-  Collection,
-  CollectionWithThumbnail,
-} from "@/lib/collections/types";
-import { shopConfig } from "@/lib/config";
-import type { CommerceLocale } from "@/lib/config/types";
-import { tagProducts } from "@/lib/product/server";
-import { buildAlternates, buildOpenGraph } from "@/lib/seo";
-import { getNumericShopifyId } from "@/lib/shopify/id/server";
-import {
-  fetchCollection,
-  fetchCollections,
-  fetchCollectionsListing,
-} from "@/lib/shopify/operations/collections/server";
-import {
-  fetchCollectionProducts,
-  fetchSearchFacets,
-  fetchSearchIndexProducts,
-} from "@/lib/shopify/operations/products/server";
+import { categories, products, toProductCard } from "../product";
 
-// /collections/all is a local virtual collection with no Storefront API equivalent.
-export const ALL_PRODUCTS_HANDLE = "all";
-
-// Delete payloads carry only the ID and renames only the new handle, so cached reads carry both tags.
-function tagCollections(collections: Array<{ handle: string; id?: string }>): void {
-  for (const collection of collections) {
-    cacheTag(`collection-${collection.handle}`);
-    const numericId = collection.id ? getNumericShopifyId(collection.id) : null;
-    if (numericId) cacheTag(`collection-${numericId}`);
+export function readDemoBrowse(params: Record<string, string | string[] | undefined>) {
+  const search = new URLSearchParams();
+  for (const [name, value] of Object.entries(params)) {
+    if (Array.isArray(value)) value.forEach((item) => search.append(name, item));
+    else if (value !== undefined) search.set(name, value);
   }
-}
-
-export async function getCollections(
-  params: { limit?: number; locale?: CommerceLocale } = {},
-): Promise<Collection[]> {
-  "use cache: remote";
-  cacheLife("max");
-  cacheTag("collections", "collections-index");
-
-  const collections = await fetchCollections(params);
-  tagCollections(collections);
-  return collections;
-}
-
-export async function getCollection(params: {
-  handle: string;
-  locale?: CommerceLocale;
-}): Promise<Collection | undefined> {
-  "use cache: remote";
-  cacheLife("max");
-  cacheTag("collections", `collection-${params.handle}`);
-
-  const collection = await fetchCollection(params);
-  if (collection) tagCollections([collection]);
-  return collection;
-}
-
-export async function getCollectionsListing(
-  params: { limit?: number; locale?: CommerceLocale } = {},
-): Promise<CollectionWithThumbnail[]> {
-  "use cache: remote";
-  cacheLife("max");
-  cacheTag("collections", "collections-index");
-
-  const collections = await fetchCollectionsListing(params);
-  tagCollections(collections);
-  // Thumbnails fall back to product imagery, so product updates must refresh the listing.
-  tagProducts(
-    collections.flatMap((collection) =>
-      collection.thumbnailProductId ? [{ id: collection.thumbnailProductId }] : [],
+  const state = resolveBrowseParams(search);
+  const query = (search.get("q") ?? "").slice(0, 200).trim();
+  const matchingQuery = products.filter((product) =>
+    `${product.title} ${product.description} ${product.category}`
+      .toLowerCase()
+      .includes(query.toLowerCase()),
+  );
+  const productTypes = state.filters.flatMap((filter) =>
+    filter.productType ? [filter.productType] : [],
+  );
+  const priceRanges = state.filters.flatMap((filter) => (filter.price ? [filter.price] : []));
+  const matchingPrice = matchingQuery.filter((product) =>
+    priceRanges.every(
+      (range) =>
+        (range.min === undefined || range.min === null || product.price >= range.min) &&
+        (range.max === undefined || range.max === null || product.price <= range.max),
     ),
   );
-  return collections;
-}
-
-export async function readBrowseState(
-  searchParamsPromise: Promise<Record<string, string | string[] | undefined>>,
-): Promise<BrowseState> {
-  return resolveBrowseParams(recordToSearchParams(await searchParamsPromise));
-}
-
-function recordToSearchParams(
-  record: Record<string, string | string[] | undefined>,
-): URLSearchParams {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(record)) {
-    if (Array.isArray(value)) {
-      for (const item of value) params.append(key, item);
-    } else if (value !== undefined) {
-      params.set(key, value);
-    }
-  }
-  return params;
-}
-
-// The default view, unfiltered and in its default sort: Search & Discovery edits send no webhook, so they appear once a product or collection webhook refreshes it, and Load more's product dedupe absorbs cursor drift.
-export async function getCollectionResults(params: {
-  handle: string;
-  locale?: CommerceLocale;
-}): Promise<BrowseResults> {
-  "use cache: remote";
-  cacheLife("max");
-  cacheTag("collections", `collection-${params.handle}`, "products-index");
-
-  const { facets, pageInfo, products } = await fetchCollectionProducts({
-    collection: params.handle,
-    limit: PRODUCTS_PER_PAGE,
-    locale: params.locale,
-  });
-  tagProducts(products);
-  return {
-    dataSearch: "",
-    facets,
-    pageInfo,
-    products,
-    source: { collection: params.handle, type: "collection" },
-  };
-}
-
-export async function getAllProductsResults(
-  params: { locale?: CommerceLocale } = {},
-): Promise<BrowseResults> {
-  "use cache: remote";
-  cacheLife("max");
-  cacheTag("products-index");
-
-  const [{ pageInfo, products }, { facets, total }] = await Promise.all([
-    fetchSearchIndexProducts({ limit: PRODUCTS_PER_PAGE, locale: params.locale }),
-    fetchSearchFacets({ locale: params.locale }),
-  ]);
-  tagProducts(products);
-  return { dataSearch: "", facets, pageInfo, products, source: { type: "search" }, total };
-}
-
-// Filtered and sorted views stay live; a cache entry per combination would rarely be reused.
-export async function fetchCollectionResults({
-  handle,
-  statePromise,
-}: {
-  handle: string;
-  statePromise: Promise<BrowseState>;
-}): Promise<BrowseResults> {
-  const { dataSearch, filters, sort } = await statePromise;
-  const { facets, pageInfo, products } = await fetchCollectionProducts({
-    collection: handle,
-    filters,
-    limit: PRODUCTS_PER_PAGE,
-    sortKey: sort,
-  });
-  return {
-    dataSearch,
-    facets,
-    pageInfo,
-    products,
-    source: { collection: handle, type: "collection" },
-  };
-}
-
-export async function getAllProductsCollection(): Promise<Collection> {
-  const title = "Products";
-  const description = "";
-  return {
-    handle: ALL_PRODUCTS_HANDLE,
-    title,
-    description,
-    image: null,
-    path: `/collections/${ALL_PRODUCTS_HANDLE}`,
-    seo: {
-      description: `Browse every product at ${shopConfig.site.name}: compare prices and check availability.`,
-      title,
-    },
-  };
-}
-
-function browseMetadata(handle: string, title: string, description: string): Metadata {
-  const url = `/collections/${handle}`;
-  return {
-    title,
-    description,
-    alternates: buildAlternates({ pathname: url }),
-    openGraph: buildOpenGraph({ title, description, url, type: "website" }),
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: ["/og-default.png"],
-    },
-  };
-}
-
-export async function getCollectionMetadata(handle: string): Promise<Metadata> {
-  const collection = await getCollection({ handle });
-  if (!collection) return browseMetadata(handle, "Collection", "Browse collection products.");
-  return browseMetadata(collection.handle, collection.seo.title, describeCollection(collection));
-}
-
-export async function getAllProductsMetadata(): Promise<Metadata> {
-  return browseMetadata(
-    ALL_PRODUCTS_HANDLE,
-    "Products",
-    describeCollection(await getAllProductsCollection()),
+  const items = matchingPrice.filter(
+    (product) => productTypes.length === 0 || productTypes.includes(product.category),
   );
+  if (state.sort === "price-ascending") items.sort((a, b) => a.price - b.price);
+  if (state.sort === "price-descending") items.sort((a, b) => b.price - a.price);
+  if (state.sort === "title-ascending") items.sort((a, b) => a.title.localeCompare(b.title));
+  if (state.sort === "title-descending") items.sort((a, b) => b.title.localeCompare(a.title));
+  const facets: Facets = {
+    filters: [
+      {
+        id: "filter.p.product_type",
+        label: "Product type",
+        paramKey: "filter.p.product_type",
+        type: "list",
+        values: categories
+          .filter((category) => category !== "All")
+          .map((category) => ({
+            count: matchingPrice.filter((product) => product.category === category).length,
+            id: `filter.p.product_type.${category}`,
+            input: JSON.stringify({ productType: category }),
+            label: category,
+            value: category,
+          })),
+      },
+    ],
+    priceRange: {
+      currencyCode: "INR",
+      max: Math.max(...products.map((product) => product.price)),
+      min: Math.min(...products.map((product) => product.price)),
+    },
+  };
+  const results: BrowseResults = {
+    dataSearch: state.dataSearch,
+    facets,
+    pageInfo: { endCursor: null, hasNextPage: false, hasPreviousPage: false, startCursor: null },
+    products: items.map(toProductCard),
+    source: { query: query || undefined, type: "search" },
+    total: items.length,
+  };
+  return { items, query, results, state };
 }

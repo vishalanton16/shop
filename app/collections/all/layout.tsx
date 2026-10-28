@@ -1,12 +1,20 @@
+import type { ReactNode } from "react";
+
 import { CollectionLayout } from "@/components/collections/collection-page";
 import { SEARCH_SORT_EXCLUDE } from "@/lib/collections";
-import { ALL_PRODUCTS_HANDLE, getAllProductsCollection } from "@/lib/collections/server";
 
-export default async function AllProductsLayout({ children }: LayoutProps<"/collections/all">) {
+export default function AllProductsLayout({ children }: { children: ReactNode }) {
   return (
     <CollectionLayout
-      collection={await getAllProductsCollection()}
-      handle={ALL_PRODUCTS_HANDLE}
+      collection={{
+        description: "",
+        handle: "all",
+        image: null,
+        path: "/collections/all",
+        seo: { description: "Browse our Halloween collection.", title: "Products" },
+        title: "Products",
+      }}
+      handle="all"
       sortExclude={SEARCH_SORT_EXCLUDE}
     >
       {children}

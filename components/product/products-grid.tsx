@@ -1,9 +1,8 @@
 import { cn } from "cn";
-import { Suspense } from "react";
+import type { ReactNode } from "react";
 
-import { ProductCard, ProductCardSkeleton } from "@/components/product-card/product-card";
+import { ProductCardSkeleton } from "@/components/product-card/product-card";
 import { Link } from "@/components/ui/link";
-import { getSearchIndexProducts } from "@/lib/product/server";
 
 interface ProductsGridSkeletonProps {
   count: number;
@@ -21,13 +20,12 @@ export function ProductsGridSkeleton({ count, className }: ProductsGridSkeletonP
 }
 
 interface ProductsGridProps {
+  children: ReactNode;
   collectionUrl?: string;
-  eagerCount?: number;
-  limit: number;
   title: string;
 }
 
-export function ProductsGrid({ collectionUrl, eagerCount = 0, limit, title }: ProductsGridProps) {
+export function ProductsGrid({ children, collectionUrl, title }: ProductsGridProps) {
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between">
@@ -41,38 +39,7 @@ export function ProductsGrid({ collectionUrl, eagerCount = 0, limit, title }: Pr
           </Link>
         )}
       </div>
-      <Suspense fallback={<ProductsGridSkeleton count={limit} />}>
-        <ProductsGridContent eagerCount={eagerCount} limit={limit} outOfStockText="Out of Stock" />
-      </Suspense>
-    </div>
-  );
-}
-
-async function ProductsGridContent({
-  eagerCount,
-  limit,
-  outOfStockText,
-}: {
-  eagerCount: number;
-  limit: number;
-  outOfStockText: string;
-}) {
-  // Use the search index (not the products connection) so these match the first items on /collections/all.
-  const { products } = await getSearchIndexProducts({
-    limit,
-  });
-  if (products.length === 0) return null;
-  return (
-    <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-      {products.map((product, index) => (
-        <ProductCard
-          key={product.id}
-          loading={index < eagerCount ? "eager" : "lazy"}
-          product={product}
-          outOfStockText={outOfStockText}
-          quickShopText="Choose"
-        />
-      ))}
+      {children}
     </div>
   );
 }

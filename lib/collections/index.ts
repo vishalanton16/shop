@@ -6,19 +6,9 @@ import {
   serializeCollectionParams,
 } from "@shopify/hydrogen";
 
-import type { BrowseState, Collection, SortValue } from "@/lib/collections/types";
-import { shopConfig } from "@/lib/config";
-import { summarizeText } from "@/lib/content";
+import type { BrowseState, SortValue } from "@/lib/collections/types";
 
 export const PRODUCTS_PER_PAGE = 40;
-
-export function describeCollection(collection: Collection): string {
-  return (
-    summarizeText(collection.seo.description) ||
-    summarizeText(collection.description) ||
-    `Shop ${collection.title} at ${shopConfig.site.name}: browse products, compare prices, and check availability.`
-  );
-}
 
 // Shopify `sort_by` values; "manual" means the collection's own order.
 export const SORT_VALUES = [
@@ -56,19 +46,6 @@ export function resolveBrowseParams(search: string | URLSearchParams): BrowseSta
     filters: state.filters,
     sort: getBrowseSort(state),
   };
-}
-
-const COLLECTION_PATH = /^\/collections\/([^/]+)\/?$/;
-const REFINED_COLLECTION_PATH = /^\/collections\/[^/]+\/refine\/?$/;
-
-// The default view never reads search params so its products stay in the static shell and prefetches; filtered and sorted views render from the request-time `refine` route.
-export function getRefinedCollectionPath(pathname: string, search: string): string | null {
-  const handle = COLLECTION_PATH.exec(pathname)?.[1];
-  return handle && resolveBrowseParams(search).dataSearch ? `/collections/${handle}/refine` : null;
-}
-
-export function isRefinedCollectionPath(pathname: string): boolean {
-  return REFINED_COLLECTION_PATH.test(pathname);
 }
 
 export function getBrowseSearch(

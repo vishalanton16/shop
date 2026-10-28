@@ -2,86 +2,43 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { ProductViewedTracker } from "@/components/analytics/trackers";
 import {
   ProductDetailSection,
   ProductDetailSkeleton,
 } from "@/components/product-detail/product-detail-section";
-import { RecentlyViewedRecorder } from "@/components/product-detail/recently-viewed";
-import { RelatedProductsSection } from "@/components/product/related-products-section";
+import { ProductsGrid } from "@/components/product/products-grid";
 import { Container } from "@/components/ui/container";
 import { Page } from "@/components/ui/page";
 import { Sections } from "@/components/ui/sections";
-import { shopConfig } from "@/lib/config";
-import { defaultSelectedOptions, parseSelectedOptions, toSelectedOptionList } from "@/lib/product";
-import { getProduct, getSearchIndexProducts } from "@/lib/product/server";
-import { type SelectedOptions } from "@/lib/product/types";
-import type { ProductVariant } from "@/lib/product/types";
-import { buildAlternates, buildOpenGraph } from "@/lib/seo";
-import { fetchProductVariant } from "@/lib/shopify/operations/products/server";
-import { PLACEHOLDER_HANDLE } from "@/lib/static-params";
 
-async function buildProductMetadata(handle: string, canonicalPath: string): Promise<Metadata> {
-  const product = await getProduct({
-    handle,
-  });
-  if (!product) notFound();
-  const images = product.featuredImage
-    ? [
-        {
-          url: product.featuredImage.url,
-          width: product.featuredImage.width,
-          height: product.featuredImage.height,
-          alt: product.featuredImage.altText,
-        },
-      ]
-    : ["/og-default.png"];
-  return {
-    title: product.seo.title,
-    description: product.seo.description,
-    alternates: buildAlternates({
-      pathname: canonicalPath,
-    }),
-    openGraph: buildOpenGraph({
-      title: product.seo.title,
-      description: product.seo.description,
-      url: canonicalPath,
-      images,
-    }),
-    twitter: {
-      card: "summary_large_image",
-      title: product.seo.title,
-      description: product.seo.description,
-      images,
-    },
-  };
-}
+import { ProductGrid } from "../../../components/product-card";
+import { ProductPurchase } from "../../../components/store-client";
+import { products } from "../../../lib/product";
+import { toProductDetails } from "../../../lib/product/server";
 
-export async function generateStaticParams() {
-  try {
-    const { products } = await getSearchIndexProducts({ limit: 1 });
-    const first = products[0];
-    return [{ handle: first ? first.handle : PLACEHOLDER_HANDLE }];
-  } catch {
-    return [{ handle: PLACEHOLDER_HANDLE }];
-  }
+export function generateStaticParams() {
+  return products.map(({ handle }) => ({ handle }));
 }
 
 export async function generateMetadata({
   params,
-}: PageProps<"/products/[handle]">): Promise<Metadata> {
+}: {
+  params: Promise<{ handle: string }>;
+}): Promise<Metadata> {
   const { handle } = await params;
-  if (handle === PLACEHOLDER_HANDLE) return {};
-  return buildProductMetadata(handle, `/products/${handle}`);
+  const product = products.find((item) => item.handle === handle);
+  return product
+    ? { description: product.description, title: product.title }
+    : { title: "Product not found" };
 }
 
-export default function ProductPage({ params, searchParams }: PageProps<"/products/[handle]">) {
+export default function ProductPage({ params }: { params: Promise<{ handle: string }> }) {
   return (
     <Page className="pt-0">
       <Container className="bg-background">
         <Sections>
           <Suspense fallback={<ProductDetailSkeleton />}>
-            <ProductPageContent params={params} searchParams={searchParams} />
+            <ProductDetails params={params} />
           </Suspense>
         </Sections>
       </Container>
@@ -89,71 +46,17 @@ export default function ProductPage({ params, searchParams }: PageProps<"/produc
   );
 }
 
-async function ProductPageContent({
-  params,
-  searchParams,
-}: Pick<PageProps<"/products/[handle]">, "params" | "searchParams">) {
+async function ProductDetails({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
-  if (handle === PLACEHOLDER_HANDLE) notFound();
-  const product = await getProduct({
-    handle,
-  });
+  const product = products.find((item) => item.handle === handle);
   if (!product) notFound();
-
-  // Keep selection separate from the variant query so the static shell stays coherent and the picker never waits on Shopify.
-  const selectedOptionsPromise: Promise<SelectedOptions> = searchParams.then(
-    (resolvedSearchParams) => ({
-      ...defaultSelectedOptions(product),
-      ...parseSelectedOptions(product.options, resolvedSearchParams ?? {}),
-    }),
-  );
-  const variantPromise: Promise<ProductVariant | undefined> = searchParams.then(
-    async (resolvedSearchParams) => {
-      if (
-        Object.keys(parseSelectedOptions(product.options, resolvedSearchParams ?? {})).length === 0
-      ) {
-        return product.defaultVariant;
-      }
-      // Uncached: the selected variant's price and stock are read live per request, and caching per option combination multiplies entries by variant count.
-      return fetchProductVariant({
-        handle,
-        selectedOptions: toSelectedOptionList({
-          ...defaultSelectedOptions(product),
-          ...parseSelectedOptions(product.options, resolvedSearchParams ?? {}),
-        }),
-      });
-    },
-  );
+  const details = toProductDetails(product);
   return (
     <>
-      <Suspense fallback={null}>
-        <ProductViewedTracker
-          product={{
-            handle: product.handle,
-            id: product.id,
-            title: product.title,
-            vendor: product.vendor,
-          }}
-          variantPromise={variantPromise}
-        />
-      </Suspense>
-      <RecentlyViewedRecorder
-        product={{
-          featuredImage: product.featuredImage,
-          handle: product.handle,
-          id: product.id,
-          price: product.price,
-          title: product.title,
-        }}
-      />
-      <ProductDetailSection
-        product={product}
-        selectedOptionsPromise={selectedOptionsPromise}
-        variantPromise={variantPromise}
-      />
-      {shopConfig.pdp.relatedProducts.isEnabled ? (
-        <RelatedProductsSection handle={handle} limit={4} />
-      ) : null}
+      <ProductDetailSection product={details} purchase={<ProductPurchase product={product} />} />
+      <ProductsGrid collectionUrl="/collections/all" title="Related Products">
+        <ProductGrid items={products.filter((item) => item.handle !== handle).slice(0, 4)} />
+      </ProductsGrid>
     </>
   );
 }

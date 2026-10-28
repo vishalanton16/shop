@@ -1,26 +1,9 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
-import { CartViewedTracker } from "@/components/analytics/trackers";
-import { CartPageContent, CartPageSkeleton } from "@/components/cart/cart-page";
+import { CartContents } from "../../components/store-client";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: "Cart",
-    robots: {
-      index: false,
-      follow: false,
-    },
-  };
-}
+export const metadata: Metadata = { title: "Cart" };
 
 export default function CartPage() {
-  return (
-    <>
-      <CartViewedTracker />
-      <Suspense fallback={<CartPageSkeleton />}>
-        <CartPageContent />
-      </Suspense>
-    </>
-  );
+  return <CartContents />;
 }

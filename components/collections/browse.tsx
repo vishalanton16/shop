@@ -1,46 +1,11 @@
-import { type ReactNode, Suspense } from "react";
+import type { ReactNode } from "react";
 
-import { ProductCard } from "@/components/product-card/product-card";
 import { ProductsGridSkeleton } from "@/components/product/products-grid";
 import { PRODUCTS_PER_PAGE } from "@/lib/collections";
-import type { BrowseResults, BrowseState, SortValue } from "@/lib/collections/types";
+import type { BrowseResults } from "@/lib/collections/types";
 
-import { BrowsePublisher, CollectionBrowseProvider } from "./collection-browse-provider";
-import { CollectionFilters } from "./filters";
-import { InfiniteProductGrid } from "./infinite-product-grid";
-import { BrowseToolbar } from "./toolbar";
-
-interface BrowseProps {
-  path: string;
-  resultCount?: ReactNode;
-  results: Promise<BrowseResults>;
-  sortExclude?: SortValue[];
-  state: Promise<BrowseState>;
-  storeKey: string;
-}
-
-interface CollectionResultsProps {
-  results: BrowseResults | Promise<BrowseResults>;
-}
-
-interface BrowseResultsGridProps {
-  results: BrowseResults;
-}
-
-export function Browse({ path, resultCount, results, sortExclude, state, storeKey }: BrowseProps) {
-  return (
-    <CollectionBrowseProvider handle={storeKey} path={path} state={state}>
-      <BrowseToolbar
-        filters={<CollectionFilters facets={results.then(({ facets }) => facets)} />}
-        resultCount={resultCount}
-        sortExclude={sortExclude}
-      />
-      <Suspense fallback={<BrowseResultsFallback />}>
-        <StreamedResultsGrid results={results} />
-      </Suspense>
-    </CollectionBrowseProvider>
-  );
-}
+import { BrowsePublisher } from "./collection-browse-provider";
+import { BrowseProductGrid } from "./product-grid";
 
 export function BrowseResultsFallback() {
   return (
@@ -50,51 +15,27 @@ export function BrowseResultsFallback() {
     />
   );
 }
-
-// Renders a collection page's grid under the layout's CollectionBrowseFrame and hands its facets and data search to the layout's toolbar.
-export async function CollectionResults({ results }: CollectionResultsProps) {
-  const resolved = await results;
+export function CollectionResults({
+  children,
+  results,
+}: {
+  children: ReactNode;
+  results: BrowseResults;
+}) {
+  const query = results.source.type === "search" ? results.source.query : undefined;
   return (
     <>
-      <BrowsePublisher dataSearch={resolved.dataSearch} facets={resolved.facets} />
-      <BrowseResultsGrid results={resolved} />
+      <BrowsePublisher dataSearch={results.dataSearch} facets={results.facets} />
+      {results.products.length ? (
+        <BrowseProductGrid>{children}</BrowseProductGrid>
+      ) : (
+        <div className="py-10 text-center">
+          <h2 className="mb-2 text-2xl">No products found</h2>
+          <p className="text-muted-foreground">
+            {query ? `We couldn't find any products matching "${query}"` : "No products available"}
+          </p>
+        </div>
+      )}
     </>
-  );
-}
-
-async function StreamedResultsGrid({ results }: { results: Promise<BrowseResults> }) {
-  return <BrowseResultsGrid results={await results} />;
-}
-
-function BrowseResultsGrid({ results }: BrowseResultsGridProps) {
-  const { dataSearch, pageInfo, products, source } = results;
-  if (products.length === 0) {
-    const query = source.type === "search" ? source.query : undefined;
-    return (
-      <div className="py-10 text-center">
-        <h2 className="mb-2 text-2xl">No products found</h2>
-        <p className="text-muted-foreground">
-          {query ? `We couldn't find any products matching "${query}"` : "No products available"}
-        </p>
-      </div>
-    );
-  }
-  return (
-    <InfiniteProductGrid
-      key={`${JSON.stringify(source)}?${dataSearch}`}
-      initialPageInfo={pageInfo}
-      initialProductIds={products.map((product) => product.id)}
-      source={source}
-    >
-      {products.map((product, index) => (
-        <ProductCard
-          key={product.id}
-          loading={index < 5 ? "eager" : "lazy"}
-          product={product}
-          outOfStockText="Out of Stock"
-          quickShopText="Choose"
-        />
-      ))}
-    </InfiniteProductGrid>
   );
 }

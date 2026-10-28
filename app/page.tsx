@@ -1,27 +1,10 @@
-import type { Metadata } from "next";
-
 import { ProductsGrid } from "@/components/product/products-grid";
 import { Container } from "@/components/ui/container";
 import { Page } from "@/components/ui/page";
 import { Sections } from "@/components/ui/sections";
-import { shopConfig } from "@/lib/config";
-import { buildAlternates, buildOpenGraph } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const title = "Home";
-  const description = "Explore featured products, curated collections, and seasonal campaigns.";
-  return {
-    title: `${title} | ${shopConfig.site.name}`,
-    description,
-    alternates: buildAlternates({ pathname: "/" }),
-    openGraph: buildOpenGraph({
-      title,
-      description,
-      url: "/",
-      type: "website",
-    }),
-  };
-}
+import { ProductGrid } from "../components/product-card";
+import { products } from "../lib/product";
 
 export default function HomePage() {
   return (
@@ -32,22 +15,18 @@ export default function HomePage() {
           <div className="relative col-start-1 row-start-1 flex items-center justify-center px-5 py-10 lg:px-10">
             <div className="flex flex-col items-center text-center gap-2.5">
               <h1 className="text-3xl md:text-5xl max-w-3xl text-foreground">
-                A Storefront Built on Vercel Shop
+                A little spooky. A lot of autumn.
               </h1>
               <p className="text-sm md:text-base max-w-xl text-foreground">
-                Agent-ready commerce, powered by Shopify, Next, and Eve.
+                Pumpkins, lanterns, and a few good ghosts. Halloween starts here.
               </p>
             </div>
           </div>
         </section>
-
         <Container>
-          <ProductsGrid
-            title="Products"
-            eagerCount={4}
-            limit={8}
-            collectionUrl="/collections/all"
-          />
+          <ProductsGrid collectionUrl="/collections/all" title="Products">
+            <ProductGrid eagerCount={4} items={products} />
+          </ProductsGrid>
         </Container>
       </Sections>
     </Page>

@@ -1,26 +1,16 @@
 "use client";
-
 import { HandbagIcon } from "lucide-react";
 
-import { useCartDrawer } from "@/components/cart/context";
-import { useCart } from "@/lib/cart/client";
-
-interface CartIconClientProps {
+interface CartButtonProps {
   cartLabel: string;
-  initialCart: { totalQuantity: number } | null;
+  onOpen: () => void;
+  quantity: number;
 }
 
-export function CartIconClient({ cartLabel, initialCart }: CartIconClientProps) {
-  const quantity = useCart((state) =>
-    state.loading
-      ? (initialCart?.totalQuantity ?? state.data.totalQuantity)
-      : state.data.totalQuantity,
-  );
-  const { openOverlay } = useCartDrawer();
-
+export function CartButton({ cartLabel, onOpen, quantity }: CartButtonProps) {
   return (
     <button
-      onClick={openOverlay}
+      onClick={onOpen}
       className="flex cursor-pointer items-center justify-center gap-1.5 text-foreground hover:text-foreground/80 transition-colors"
       type="button"
     >

@@ -1,21 +1,27 @@
-import { PredictiveSearchProvider } from "@shopify/hydrogen/react";
-import { Suspense } from "react";
+import type { ReactNode } from "react";
 
 import { Container } from "@/components/ui/container";
 import { Link } from "@/components/ui/link";
-import { shopConfig } from "@/lib/config";
 import type { MenuItem } from "@/lib/menu/types";
 
-import { NavAccount, NavAccountFallback } from "./account";
-import { CartIcon, CartIconFallback } from "./cart";
 import { MobileMenu } from "./mobile-menu";
 import { QuickLinks } from "./quick-links";
-import { SearchModal } from "./search-modal";
 
-export function Nav() {
-  const items: MenuItem[] = [
-    { id: "default-nav-shop", items: [], title: "Shop", url: "/collections/all" },
-  ];
+interface NavProps {
+  account?: ReactNode;
+  cart: ReactNode;
+  items?: MenuItem[];
+  name: string;
+  search: ReactNode;
+}
+
+export function Nav({
+  account,
+  cart,
+  items = [{ id: "nav-shop", items: [], title: "Shop", url: "/collections/all" }],
+  name,
+  search,
+}: NavProps) {
   return (
     <nav
       className="sticky top-0 z-30 w-full bg-background pt-[env(safe-area-inset-top,0px)] transition-shadow duration-250"
@@ -25,29 +31,15 @@ export function Nav() {
         <MobileMenu items={items} />
 
         <Link className="flex items-center shrink-0" href="/">
-          <span className="text-xl leading-4">{shopConfig.site.name}</span>
+          <span className="text-xl leading-4">{name}</span>
         </Link>
 
         <QuickLinks items={items} />
 
         <div className="flex items-center gap-5 ml-auto">
-          {shopConfig.search.isEnabled && (
-            <PredictiveSearchProvider
-              debounceInMs={300}
-              limit={3}
-              types={["PRODUCT", "COLLECTION", "QUERY"]}
-            >
-              <SearchModal />
-            </PredictiveSearchProvider>
-          )}
-          {shopConfig.auth.isEnabled && (
-            <Suspense fallback={<NavAccountFallback />}>
-              <NavAccount />
-            </Suspense>
-          )}
-          <Suspense fallback={<CartIconFallback />}>
-            <CartIcon />
-          </Suspense>
+          {search}
+          {account}
+          {cart}
         </div>
       </Container>
     </nav>
