@@ -8,11 +8,11 @@ export const products: Product[] = catalog;
 export const categories = ["All", "Pumpkins", "Lights & Lanterns", "Porch Decor", "Table Decor"];
 
 export function formatPrice(amount: number) {
-  return formatMoney({ amount: String(amount), currencyCode: "INR" });
+  return formatMoney({ amount: String(amount), currencyCode: shopConfig.currencyCode });
 }
 
 export function toProductCard(product: Product): ProductCard {
-  const price = { amount: String(product.price), currencyCode: "INR" };
+  const price = { amount: String(product.price), currencyCode: shopConfig.currencyCode };
   return {
     availableForSale: true,
     featuredImage: {
@@ -48,3 +48,4 @@ export function getDiscountPercent(
   const percent = Math.round(((compareAt - Number(amount)) / compareAt) * 100);
   return percent >= 1 ? percent : null;
 }
+import { shopConfig } from "@/lib/config";

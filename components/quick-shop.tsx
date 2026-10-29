@@ -11,6 +11,7 @@ import {
 } from "@/components/product-card/quick-shop";
 import { Price } from "@/components/product/price";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { shopConfig } from "@/lib/config";
 
 import type { Product } from "../lib/product/types";
 import { ProductPurchase } from "./store-client";
@@ -48,7 +49,9 @@ export function DemoQuickShop({ product }: { product: Product }) {
         <div className="min-h-0 overflow-y-auto overscroll-contain sm:overflow-visible">
           <QuickShopLayout image={product.image} title={product.title}>
             <QuickShopPurchasePanel
-              price={<Price amount={String(product.price)} currencyCode="INR" />}
+              price={
+                <Price amount={String(product.price)} currencyCode={shopConfig.currencyCode} />
+              }
               title={product.title}
             >
               <ProductPurchase

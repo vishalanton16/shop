@@ -1,4 +1,5 @@
 export const shopConfig = {
+  currencyCode: "USD",
   localization: { locale: "en-US" },
   site: {
     description: "Pumpkins, lanterns, and Halloween decorations.",

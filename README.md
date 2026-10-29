@@ -19,6 +19,14 @@ Build with `pnpm build`, then serve with `pnpm start`. Run `pnpm lint` and `pnpm
 
 Catalog and sample prices: `lib/product/catalog.json`. Images: `public/images/`. Cart data lives under `hollow-harvest-cart-v1` in browser local storage.
 
+## Juggling demo
+
+The home-page products juggle automatically at Lively speed, every 1.8 seconds. Every shuffle changes the actual product DOM order. There are no configuration controls.
+
+Cards retain their product links and quick-shop state while moving. The Web Animations API animates the live elements, avoiding View Transition snapshots that interfere with hit testing. Reduced-motion preferences disable movement animations. Juggling does not pause on hover or focus.
+
+Standalone Python recording scripts live in [stagehand-demo](stagehand-demo/README.md). Record Playwright and Stagehand separately to compare a positional selector with product intent. The storefront itself has no automation dependency.
+
 ## Photo sources
 
 Photos downloaded through the browser from Unsplash. They illustrate the demo products.

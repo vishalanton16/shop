@@ -1,5 +1,6 @@
 import { cn } from "cn";
 
+import { JugglingGrid } from "@/components/juggling-grid";
 import { ProductCard } from "@/components/product-card/product-card";
 
 import { toProductCard } from "../lib/product";
@@ -10,11 +11,31 @@ interface ProductGridProps {
   className?: string;
   eagerCount?: number;
   items: Product[];
+  juggle?: boolean;
 }
 
-export function ProductGrid({ className, eagerCount = 0, items }: ProductGridProps) {
+export function ProductGrid({
+  className,
+  eagerCount = 0,
+  items,
+  juggle = false,
+}: ProductGridProps) {
+  const gridClassName = cn("grid grid-cols-2 gap-5 lg:grid-cols-4", className);
+
+  if (juggle) {
+    return (
+      <JugglingGrid
+        cards={items.map((product, index) => ({
+          content: <DemoProductCard eager={index < eagerCount} product={product} />,
+          handle: product.handle,
+        }))}
+        className={gridClassName}
+      />
+    );
+  }
+
   return (
-    <div className={cn("grid grid-cols-2 gap-5 lg:grid-cols-4", className)}>
+    <div className={gridClassName}>
       {items.map((product, index) => (
         <DemoProductCard eager={index < eagerCount} key={product.handle} product={product} />
       ))}

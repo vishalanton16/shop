@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/components/ui/link";
+import { shopConfig } from "@/lib/config";
 
 import { useDemoCart } from "../lib/cart/client";
 import { formatPrice, products } from "../lib/product";
@@ -307,7 +308,11 @@ function CartSummary() {
         <div aria-label="Estimated total" className="grid gap-1" role="group">
           <div className="flex items-baseline justify-between text-base text-foreground">
             <span>Estimated total</span>
-            <Price amount={String(total)} className="font-medium text-xl" currencyCode="INR" />
+            <Price
+              amount={String(total)}
+              className="font-medium text-xl"
+              currencyCode={shopConfig.currencyCode}
+            />
           </div>
           <p className="text-xs text-muted-foreground">Local demo. No orders or payments.</p>
         </div>
@@ -343,7 +348,7 @@ function CheckoutContents() {
       ))}
       <div className="flex justify-between border-t pt-5">
         <span>Total{discount ? " after discount" : ""}</span>
-        <Price amount={String(total)} currencyCode="INR" />
+        <Price amount={String(total)} currencyCode={shopConfig.currencyCode} />
       </div>
       <Button onClick={() => setPanel("cart")}>Back to cart</Button>
     </div>

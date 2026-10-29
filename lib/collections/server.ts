@@ -1,5 +1,6 @@
 import { resolveBrowseParams } from "@/lib/collections";
 import type { BrowseResults } from "@/lib/collections/types";
+import { shopConfig } from "@/lib/config";
 import type { Facets } from "@/lib/filters/types";
 
 import { categories, products, toProductCard } from "../product";
@@ -54,7 +55,7 @@ export function readDemoBrowse(params: Record<string, string | string[] | undefi
       },
     ],
     priceRange: {
-      currencyCode: "INR",
+      currencyCode: shopConfig.currencyCode,
       max: Math.max(...products.map((product) => product.price)),
       min: Math.min(...products.map((product) => product.price)),
     },
